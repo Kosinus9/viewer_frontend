@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Viewer</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <main id="viewer"></main>
+    <script type="module">
+        import './application/FrontendController.js';
+        import './application/ViewManager.js';
+        import './application/EventManager.js';
+        import './domain/View.js';
+        import './domain/renderer/FrontendRenderer.js';
+        import './domain/renderer/PDFRenderer.js';
+        import './domain/renderer/ImageRenderer.js';
+        import './domain/renderer/VideoRenderer.js';
+        import './domain/renderer/TextRenderer.js';
+        import './domain/DUT/ENUM/E_FrontendEvent.js';
+        import './domain/DUT/ENUM/E_FileType.js';
+        import './domain/DUT/STRUCT/ST_FrontendJob.js';
+        import './domain/DUT/STRUCT/ST_FrontendEvent.js';
+        import './domain/DUT/STRUCT/ST_FrontendToBackendData.js';
+        import './infrastructure/FrontendBridge.js';
+        // TODO: Initialize the runtime after class-to-class contracts are implemented.
+    </script>
+</body>
+</html>
