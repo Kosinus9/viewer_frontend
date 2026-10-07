@@ -7,7 +7,15 @@
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-    <main id="viewer"></main>
+    <main id="viewer">
+        <section class="view">
+            <header class="view-header">
+                <span class="view-title">Test render.test</span>
+                <button class="view-close" type="button">X</button>
+            </header>
+            <div class="view-content"></div>
+        </section>
+    </main>
     <script type="module">
         import './application/FrontendController.js';
         import './application/EventManager.js';
