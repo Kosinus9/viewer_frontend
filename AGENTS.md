@@ -20,10 +20,17 @@ Keep responsibilities grouped as follows:
 frontend/
 - application/
   - FrontendController.js
-  - ViewManager.js
   - EventManager.js
 - domain/
   - View.js
+  - DUT/
+    - ENUM/
+      - E_FrontendEvent.js
+      - E_FileType.js
+    - STRUCT/
+      - ST_FrontendJob.js
+      - ST_FrontendEvent.js
+      - ST_FrontendToBackendData.js
   - renderer/
     - FrontendRenderer.js
     - PDFRenderer.js
@@ -40,7 +47,7 @@ Do not create new architectural layers or move responsibilities between layers w
 ## Naming convention
 Use the project naming convention consistently:
 - Classes: `CLS_...`
-  - Example: `CLS_BackendBridge`, `CLS_FrontendController`, `CLS_ViewManager`, `CLS_View`
+  - Example: `CLS_BackendBridge`, `CLS_FrontendController`, `CLS_View`
 - Class instances: `cls...`
   - Example: `clsBackendBridge`, `clsFrontendController`, `clsView`
 - Data structures: `ST_...`
@@ -58,18 +65,15 @@ The required frontend input flow is:
 Backend
 → CLS_BackendBridge
 → CLS_FrontendController
-→ CLS_ViewManager
 → CLS_View
 → specialized Renderer
 → DOM
 
 The event/return flow is:
 
-CLS_View
+DOM / CLS_View / Renderer
 → CLS_EventManager
 → CLS_FrontendController
-→ CLS_ViewManager for local View actions
-and/or
 → CLS_BackendBridge
 → Backend
 
@@ -80,7 +84,7 @@ Responsibilities:
 - It is the frontend technical boundary toward the backend.
 - Receive backend-side data.
 - Perform only the technical conversion/deserialization required to obtain clean JavaScript-side data.
-- Pass normalized frontend data to `CLS_FrontendController`.
+- Pass received JavaScript-side data to `CLS_FrontendController.processData(stBackendToFrontendData)`.
 - Send frontend-to-backend data to the backend.
 
 Rules:
@@ -91,37 +95,25 @@ Rules:
 
 ## CLS_FrontendController
 Responsibilities:
-- Central orchestration and routing.
-- Receive `stFrontendJob` from `CLS_BackendBridge`.
-- Pass the same `stFrontendJob` to `CLS_ViewManager`; do not rebuild it unnecessarily.
-- Receive `stFrontendEvent` from `CLS_EventManager`.
-- Decide the required local frontend action.
-- Build the frontend-to-backend data required for backend notification.
-- Pass backend-bound data to `CLS_BackendBridge`.
+- Central orchestration and routing, directly between the bridge and Views.
+- `processData(stBackendToFrontendData)` receives backend-to-frontend data and extracts/prepares information required by the frontend.
+- `processCommand(command)` routes/triggers the frontend action after incoming data has been prepared.
+- `processEvent(stFrontendEvent)` handles normalized frontend events in the Frontend -> Backend direction.
+- Build the required `ST_FrontendToBackendData` and pass it to `CLS_BackendBridge`.
+- Preserve backend values and pass the same `stFrontendJob` to the View when appropriate.
 
-Do not move DOM construction, rendering or View storage into this class.
+Do not move DOM construction or content rendering into this class.
+Do not maintain a redundant frontend collection of Views or Sections.
+The exact incoming data envelope and command contract remain TODOs until established by backend documentation; do not invent fields.
 
-## CLS_ViewManager
-Responsibilities:
-- Manage all active `CLS_View` instances.
-- Create Views from `stFrontendJob`.
-- Store active Views in a dictionary/map.
-- Locate, close and remove Views.
-
-Identity rule:
-`dicViews[sectionId] = clsView`
-
-V1 lifecycle:
-- `createView(stFrontendJob)`
-- `closeView(sectionId)`
-- `removeView(sectionId)`
-
-Rules:
-- `sectionId` is the identity supplied by the backend.
-- Do not invent a separate `jobId`.
-- The dictionary contains View instances, not jobs.
-- ViewManager does not build the View DOM itself.
-- Do not implement hide/show in V1 unless explicitly requested.
+## Section identity and visual state
+- The backend is the source of truth for Sections and their lifecycle.
+- The DOM represents the actual visual state of the frontend.
+- Each View/DOM container must be identifiable directly through the backend-provided `sectionId`.
+- A command concerning a `sectionId` locates the corresponding View/DOM container using that identity.
+- View events use the same `sectionId` to identify the backend Section.
+- Do not introduce another frontend View ID, `jobId`, or a redundant View dictionary/map.
+- The precise DOM identity mechanism is deferred to implementation; no new identity contract is defined here.
 
 ## CLS_View
 Responsibilities:
@@ -135,7 +127,7 @@ Responsibilities:
 - Handle interactions that belong to the whole View, including CLOSE.
 
 Rules:
-- Borders, dimensions, position, rounded corners and View-level styling belong to the View/CSS, not to the Renderer.
+- Borders, dimensions, position, rounded corners, header/title bar, close button and View-level styling belong to the View/CSS, not to the Renderer.
 - `fileName` remains available to the View and is not required by the Renderer in V1 unless needed later.
 
 ## Renderers
@@ -150,7 +142,7 @@ Rules:
 - At runtime, `CLS_View` selects and uses the specialized Renderer directly.
 - Do not insert `FrontendRenderer` as an unnecessary runtime intermediary.
 - A Renderer renders content into the DOM target/container owned by its View.
-- A Renderer manages content, not View geometry or global layout.
+- A Renderer manages content, not View geometry, View lifecycle or global layout.
 - Do not make a Renderer responsible for CLOSE or other View-level controls.
 
 ## ST_FrontendJob
@@ -168,7 +160,7 @@ Rules:
 - Preserve backend values.
 - Do not add `jobId`.
 - Do not add fields without an explicit architectural decision.
-- Pass the same structure through BackendBridge → FrontendController → ViewManager → View when appropriate.
+- Pass the same structure through BackendBridge -> FrontendController -> View when appropriate.
 
 ## ST_FrontendEvent
 This is an internal frontend contract between `CLS_EventManager` and `CLS_FrontendController`.
@@ -195,7 +187,7 @@ Do not invent additional fields without checking the backend contract.
 
 ## CLS_EventManager
 Responsibilities:
-- Receive/capture events produced by Views/DOM interactions.
+- Receive/capture events produced by DOM interactions, Views or Renderers.
 - Normalize/package event information into `ST_FrontendEvent`.
 - Send `stFrontendEvent` to `CLS_FrontendController`.
 
@@ -205,21 +197,22 @@ Conceptual V1 method:
 Controller receiver:
 - `processEvent(stFrontendEvent)`
 
-Do not make EventManager decide backend behavior or directly close Views through ViewManager.
+Do not make EventManager decide backend behavior, directly close Views or bypass the controller.
 
-## CLOSE flow
-The required V1 CLOSE sequence is:
+## CLOSE/event flow
+The required V1 CLOSE event sequence is:
 
-1. A View produces a CLOSE interaction.
+1. A View produces a CLOSE interaction carrying its backend-provided `sectionId`.
 2. `CLS_EventManager` creates `stFrontendEvent` with `eventType` and `sectionId`.
 3. `CLS_FrontendController.processEvent(stFrontendEvent)` receives it.
-4. Controller asks `CLS_ViewManager.closeView(sectionId)` to close the local View.
-5. ViewManager stops/releases View/Renderer resources and removes the View through the lifecycle.
-6. Controller creates the required `ST_FrontendToBackendData`.
-7. Controller sends it to `CLS_BackendBridge`.
-8. BackendBridge sends it to the backend.
+4. Controller creates the required `ST_FrontendToBackendData`.
+5. Controller sends it to `CLS_BackendBridge`.
+6. BackendBridge sends it to the backend, which remains responsible for Section lifecycle.
 
-Do not add a direct `CLS_EventManager → CLS_ViewManager` or `CLS_ViewManager → Backend` path.
+Backend commands return through BackendBridge -> FrontendController -> View -> specialized Renderer -> DOM.
+Commands target the View/DOM container using `sectionId`.
+The timing and exact command contract for visual removal and resource release remain TODOs; do not assume local removal before backend notification.
+Do not add a direct EventManager -> Backend path or bypass the controller.
 
 ## V1 scope restrictions
 - No hide/show lifecycle for Views.
@@ -258,8 +251,8 @@ For every meaningful implementation change:
 - Check that imports/exports resolve.
 - Check that the browser can load the frontend without JavaScript errors.
 - Check that `sectionId` remains consistent across the complete flow.
-- Check that View creation registers the correct `clsView`.
-- Check that CLOSE releases the View/Renderer resources and removes the correct dictionary entry.
+- Check that the View/DOM container can be located using the backend-provided `sectionId`.
+- Once lifecycle commands are implemented, check that they target the correct sectionId and release the corresponding View/Renderer resources on removal.
 - Check that frontend events are routed through `CLS_FrontendController`.
 - Check that backend-bound data passes through `CLS_BackendBridge`.
 - Do not report a test as successful unless it was actually executed and passed.
