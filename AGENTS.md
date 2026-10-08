@@ -222,6 +222,22 @@ Do not add a direct EventManager -> Backend path or bypass the controller.
 - Do not implement speculative features outside the current task.
 - Multiple Views must remain independently identifiable by `sectionId`.
 
+## Message types
+
+- Backend/frontend message types are centralized in `frontend/domain/DUT/ENUM/E_MessageType.js`.
+- Classes must use `E_MessageType.COMMAND`, `E_MessageType.EVENT`, and `E_MessageType.RESPONSE` wherever these message type values are needed, instead of repeating string literals.
+- The enum values must remain identical to the Python JSON contract and must not change the exchanged message format or keys.
+- `RESPONSE` is defined for V2; do not implement its handling in V1.
+
+## Local variable naming
+
+- Ordinary JavaScript local variables must use words separated by `_`, with the first word lowercase and each subsequent word starting with an uppercase letter, for example `message_From_Backend` and `json_Data`.
+- Method parameters retain their existing explicit names unless a specific rename is requested.
+- Preserve class names (`CLS_...`), structure names (`ST_...`), enum names (`E_...`), structure instance names (`st...`), and class instance names (`cls...`). These instance conventions take precedence over ordinary local variable naming.
+- Do not rename structure properties or JSON contract keys, including `messageType`, `data`, `sectionId`, and `stJobLayout`.
+- Preserve the method naming convention below, for example `receive_Message()` and `convert_Data_From_Backend_To_Frontend()`.
+- Keep method documentation comments in English. Naming changes must not alter program behavior.
+
 ## Method naming
 
 Method names must follow the Python backend convention: words separated by `_`, with the first word lowercase and each subsequent word starting with an uppercase letter.

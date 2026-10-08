@@ -1,5 +1,6 @@
 import { ST_BackendToFrontendData } from '../domain/DUT/STRUCT/ST_BackendToFrontendData.js';
 import { ST_JobLayout }             from '../domain/DUT/STRUCT/ST_JobLayout.js';
+import { E_MessageType }           from '../domain/DUT/ENUM/E_MessageType.js';
 
 /** Technical backend boundary; backend transport is deferred. */
 export class CLS_BackendBridge {
@@ -19,9 +20,9 @@ export class CLS_BackendBridge {
      * @throws {SyntaxError} If the message is not valid JSON.
      */
     receive_Message(jsonMessage) {
-        const message = JSON.parse(jsonMessage);
-        if (message.messageType === 'COMMAND') {
-            const stBackendToFrontendData = this.convert_Data_From_Backend_To_Frontend(message.data);
+        const message_From_Backend = JSON.parse(jsonMessage);
+        if (message_From_Backend.messageType === E_MessageType.COMMAND) {
+            const stBackendToFrontendData = this.convert_Data_From_Backend_To_Frontend(message_From_Backend.data);
             this.send_Data_To_Frontend_Controller(stBackendToFrontendData);
         }
     }
@@ -65,7 +66,7 @@ export class CLS_BackendBridge {
      */
     convert_Data_From_Frontend_To_Backend(stFrontendToBackendData) {
         return JSON.stringify({
-            messageType: 'EVENT',
+            messageType: E_MessageType.EVENT,
             data: {
                 event:     stFrontendToBackendData.event,
                 sectionId: stFrontendToBackendData.sectionId,
