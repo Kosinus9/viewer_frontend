@@ -84,7 +84,7 @@ Responsibilities:
 - It is the frontend technical boundary toward the backend.
 - Receive backend-side data.
 - Perform only the technical conversion/deserialization required to obtain clean JavaScript-side data.
-- Pass received JavaScript-side data to `CLS_FrontendController.processData(stBackendToFrontendData)`.
+- Pass received JavaScript-side data to `CLS_FrontendController.process_Data(stBackendToFrontendData)`.
 - Send frontend-to-backend data to the backend.
 
 Rules:
@@ -96,9 +96,9 @@ Rules:
 ## CLS_FrontendController
 Responsibilities:
 - Central orchestration and routing, directly between the bridge and Views.
-- `processData(stBackendToFrontendData)` receives backend-to-frontend data and extracts/prepares information required by the frontend.
-- `processCommand(command)` routes/triggers the frontend action after incoming data has been prepared.
-- `processEvent(stFrontendEvent)` handles normalized frontend events in the Frontend -> Backend direction.
+- `process_Data(stBackendToFrontendData)` receives backend-to-frontend data and extracts/prepares information required by the frontend.
+- `process_Command(command)` routes/triggers the frontend action after incoming data has been prepared.
+- `process_Event(stFrontendEvent)` handles normalized frontend events in the Frontend -> Backend direction.
 - Build the required `ST_FrontendToBackendData` and pass it to `CLS_BackendBridge`.
 - Preserve backend values and pass the same `stFrontendJob` to the View when appropriate.
 
@@ -192,10 +192,10 @@ Responsibilities:
 - Send `stFrontendEvent` to `CLS_FrontendController`.
 
 Conceptual V1 method:
-- `eventProcessing(...)`
+- `event_Processing(...)`
 
 Controller receiver:
-- `processEvent(stFrontendEvent)`
+- `process_Event(stFrontendEvent)`
 
 Do not make EventManager decide backend behavior, directly close Views or bypass the controller.
 
@@ -204,7 +204,7 @@ The required V1 CLOSE event sequence is:
 
 1. A View produces a CLOSE interaction carrying its backend-provided `sectionId`.
 2. `CLS_EventManager` creates `stFrontendEvent` with `eventType` and `sectionId`.
-3. `CLS_FrontendController.processEvent(stFrontendEvent)` receives it.
+3. `CLS_FrontendController.process_Event(stFrontendEvent)` receives it.
 4. Controller creates the required `ST_FrontendToBackendData`.
 5. Controller sends it to `CLS_BackendBridge`.
 6. BackendBridge sends it to the backend, which remains responsible for Section lifecycle.
@@ -221,6 +221,15 @@ Do not add a direct EventManager -> Backend path or bypass the controller.
 - Do not merge Display Manager responsibilities into Viewer.
 - Do not implement speculative features outside the current task.
 - Multiple Views must remain independently identifiable by `sectionId`.
+
+## Method naming
+
+Method names must follow the Python backend convention: words separated by `_`, with the first word lowercase and each subsequent word starting with an uppercase letter.
+- Example: `convert_Data_From_Backend_To_Frontend()`.
+- Apply this mandatory convention to new JavaScript methods and existing methods affected by the task.
+- Preserve the current naming conventions for classes, structures, variables, and properties.
+- Do not rename JavaScript native or library methods, or the language-defined `constructor`.
+- Every method must retain a minimal descriptive comment in English.
 
 ## Method documentation
 Every method must always have a short comment written in English that explains its purpose, responsibility, or intended use.

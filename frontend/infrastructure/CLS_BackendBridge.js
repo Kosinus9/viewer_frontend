@@ -5,7 +5,7 @@ import { ST_JobLayout }             from '../domain/DUT/STRUCT/ST_JobLayout.js';
 export class CLS_BackendBridge {
     /**
      * Stores the controller reference provided by the caller.
-     * @param {{ processData: function(ST_BackendToFrontendData): void }} clsFrontendController
+     * @param {{ process_Data: function(ST_BackendToFrontendData): void }} clsFrontendController
      * Controller instance that receives incoming data.
      */
     constructor(clsFrontendController) {
@@ -18,11 +18,11 @@ export class CLS_BackendBridge {
      * @param {string} jsonMessage JSON message received from the backend.
      * @throws {SyntaxError} If the message is not valid JSON.
      */
-    receiveMessage(jsonMessage) {
+    receive_Message(jsonMessage) {
         const message = JSON.parse(jsonMessage);
         if (message.messageType === 'COMMAND') {
-            const stBackendToFrontendData = this.convertDataFromBackendToFrontend(message.data);
-            this.sendDataToFrontendController(stBackendToFrontendData);
+            const stBackendToFrontendData = this.convert_Data_From_Backend_To_Frontend(message.data);
+            this.send_Data_To_Frontend_Controller(stBackendToFrontendData);
         }
     }
 
@@ -32,7 +32,7 @@ export class CLS_BackendBridge {
      * the sectionId identifier and the stJobLayout layout.
      * @returns {ST_BackendToFrontendData} Structure containing an ST_JobLayout instance.
      */
-    convertDataFromBackendToFrontend(jsonData) {
+    convert_Data_From_Backend_To_Frontend(jsonData) {
         const stBackendToFrontendData       = new ST_BackendToFrontendData();
         stBackendToFrontendData.fileName    = jsonData.fileName;
         stBackendToFrontendData.fileType    = jsonData.fileType;
@@ -51,10 +51,10 @@ export class CLS_BackendBridge {
 
     /**
      * Forwards the same instance to the controller without conversion or business logic.
-     * @param {ST_BackendToFrontendData} stBackendToFrontendData Data to forward to processData.
+     * @param {ST_BackendToFrontendData} stBackendToFrontendData Data to forward to process_Data.
      */
-    sendDataToFrontendController(stBackendToFrontendData) {
-        this.clsFrontendController.processData(stBackendToFrontendData);
+    send_Data_To_Frontend_Controller(stBackendToFrontendData) {
+        this.clsFrontendController.process_Data(stBackendToFrontendData);
     }
 
     /**
@@ -63,7 +63,7 @@ export class CLS_BackendBridge {
      * Event data intended for the backend.
      * @returns {string} JSON message prepared for transport to the backend.
      */
-    convertDataFromFrontendToBackend(stFrontendToBackendData) {
+    convert_Data_From_Frontend_To_Backend(stFrontendToBackendData) {
         return JSON.stringify({
             messageType: 'EVENT',
             data: {
