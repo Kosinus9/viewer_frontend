@@ -222,6 +222,14 @@ Do not add a direct EventManager -> Backend path or bypass the controller.
 - Do not implement speculative features outside the current task.
 - Multiple Views must remain independently identifiable by `sectionId`.
 
+## Method documentation
+Every method must always have a short comment written in English that explains its purpose, responsibility, or intended use.
+- Place the comment immediately above the method declaration.
+- Apply this rule to constructors, implemented methods, and TODO/stub methods alike.
+- Keep comments concise, accurate, and consistent with the method's actual behavior.
+- When changing a method's purpose or behavior, update its comment accordingly.
+- Do not use French for method documentation comments, even when task instructions are in French.
+
 ## Implementation discipline
 When modifying this repository:
 1. Implement only the requested scope.
