@@ -21,54 +21,54 @@ export class CLS_BackendBridge {
     receiveMessage(jsonMessage) {
         const message = JSON.parse(jsonMessage);
         if (message.messageType === 'COMMAND') {
-            const stData = this.convertDataFromBackendToFrontend(message.data);
-            this.sendDataToFrontendController(stData);
+            const stBackendToFrontendData = this.convertDataFromBackendToFrontend(message.data);
+            this.sendDataToFrontendController(stBackendToFrontendData);
         }
     }
 
     /**
      * Copies incoming data into frontend structures without changing its values.
-     * @param {object} data Backend data containing file fields,
+     * @param {object} jsonData Backend data containing file fields,
      * the sectionId identifier and the stJobLayout layout.
      * @returns {ST_BackendToFrontendData} Structure containing an ST_JobLayout instance.
      */
-    convertDataFromBackendToFrontend(data) {
-        const stData = new ST_BackendToFrontendData();
-        stData.fileName    = data.fileName;
-        stData.fileType    = data.fileType;
-        stData.filePath    = data.filePath;
-        stData.sectionId   = data.sectionId;
+    convertDataFromBackendToFrontend(jsonData) {
+        const stBackendToFrontendData       = new ST_BackendToFrontendData();
+        stBackendToFrontendData.fileName    = jsonData.fileName;
+        stBackendToFrontendData.fileType    = jsonData.fileType;
+        stBackendToFrontendData.filePath    = jsonData.filePath;
+        stBackendToFrontendData.sectionId   = jsonData.sectionId;
 
-        const stJobLayout  = new ST_JobLayout();
-        stJobLayout.x      = data.stJobLayout.x;
-        stJobLayout.y      = data.stJobLayout.y;
-        stJobLayout.width  = data.stJobLayout.width;
-        stJobLayout.height = data.stJobLayout.height;
-        stData.stJobLayout = stJobLayout;
+        const stJobLayout                   = new ST_JobLayout();
+        stJobLayout.x                       = jsonData.stJobLayout.x;
+        stJobLayout.y                       = jsonData.stJobLayout.y;
+        stJobLayout.width                   = jsonData.stJobLayout.width;
+        stJobLayout.height                  = jsonData.stJobLayout.height;
+        stBackendToFrontendData.stJobLayout = stJobLayout;
 
-        return stData;
+        return stBackendToFrontendData;
     }
 
     /**
      * Forwards the same instance to the controller without conversion or business logic.
-     * @param {ST_BackendToFrontendData} stData Data to forward to processData.
+     * @param {ST_BackendToFrontendData} stBackendToFrontendData Data to forward to processData.
      */
-    sendDataToFrontendController(stData) {
-        this.clsFrontendController.processData(stData);
+    sendDataToFrontendController(stBackendToFrontendData) {
+        this.clsFrontendController.processData(stBackendToFrontendData);
     }
 
     /**
      * Serializes the event and sectionId fields in an EVENT envelope.
-     * @param {import('../domain/DUT/STRUCT/ST_FrontendToBackendData.js').ST_FrontendToBackendData} stData
+     * @param {import('../domain/DUT/STRUCT/ST_FrontendToBackendData.js').ST_FrontendToBackendData} stFrontendToBackendData
      * Event data intended for the backend.
      * @returns {string} JSON message prepared for transport to the backend.
      */
-    convertDataFromFrontendToBackend(stData) {
+    convertDataFromFrontendToBackend(stFrontendToBackendData) {
         return JSON.stringify({
             messageType: 'EVENT',
             data: {
-                event: stData.event,
-                sectionId: stData.sectionId,
+                event:     stFrontendToBackendData.event,
+                sectionId: stFrontendToBackendData.sectionId,
             },
         });
     }
