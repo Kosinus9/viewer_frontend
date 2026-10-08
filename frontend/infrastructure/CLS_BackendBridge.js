@@ -9,8 +9,9 @@ export class CLS_BackendBridge {
      * @param {{ process_Command: function(ST_BackendToFrontendData): void }} clsFrontendController
      * Controller instance that receives incoming data.
      */
-    constructor(clsFrontendController) {
+    constructor(clsFrontendController, send_Message) {
         this.clsFrontendController = clsFrontendController;
+        this.transport = send_Message;
     }
 
     /**
@@ -22,8 +23,8 @@ export class CLS_BackendBridge {
     receive_Message(jsonMessage) {
         const message_From_Backend = JSON.parse(jsonMessage);
         if (message_From_Backend.messageType === E_MessageType.COMMAND) {
-            const stBackendToFrontendData = this.convert_Data_From_Backend_To_Frontend(message_From_Backend.data);
-            this.send_Data_To_Frontend_Controller(stBackendToFrontendData);
+            const stJobFrontend = this.convert_Data_From_Backend_To_Frontend(message_From_Backend.data);
+            this.send_Data_To_Frontend_Controller(stJobFrontend);
         }
     }
 
@@ -34,12 +35,12 @@ export class CLS_BackendBridge {
      * @returns {ST_BackendToFrontendData} Structure containing an ST_JobLayout instance.
      */
     convert_Data_From_Backend_To_Frontend(jsonData) {
-        const stBackendToFrontendData       = new ST_BackendToFrontendData();
-        stBackendToFrontendData.commandType = jsonData.commandType;
-        stBackendToFrontendData.fileName    = jsonData.fileName;
-        stBackendToFrontendData.fileType    = jsonData.fileType;
-        stBackendToFrontendData.filePath    = jsonData.filePath;
-        stBackendToFrontendData.sectionId   = jsonData.sectionId;
+        const stJobFrontend       = new ST_BackendToFrontendData();
+        stJobFrontend.commandType = jsonData.commandType;
+        stJobFrontend.fileName    = jsonData.fileName;
+        stJobFrontend.fileType    = jsonData.fileType;
+        stJobFrontend.filePath    = jsonData.filePath;
+        stJobFrontend.sectionId   = jsonData.sectionId;
 
         if (jsonData.stJobLayout !== undefined) {
             const stJobLayout                   = new ST_JobLayout();
@@ -47,18 +48,18 @@ export class CLS_BackendBridge {
             stJobLayout.y                       = jsonData.stJobLayout.y;
             stJobLayout.width                   = jsonData.stJobLayout.width;
             stJobLayout.height                  = jsonData.stJobLayout.height;
-            stBackendToFrontendData.stJobLayout = stJobLayout;
+            stJobFrontend.stJobLayout = stJobLayout;
         }
 
-        return stBackendToFrontendData;
+        return stJobFrontend;
     }
 
     /**
      * Forwards the same instance to the controller without conversion or business logic.
-     * @param {ST_BackendToFrontendData} stBackendToFrontendData Data to forward to process_Command.
+     * @param {ST_BackendToFrontendData} stJobFrontend Data to forward to process_Command.
      */
-    send_Data_To_Frontend_Controller(stBackendToFrontendData) {
-        this.clsFrontendController.process_Command(stBackendToFrontendData);
+    send_Data_To_Frontend_Controller(stJobFrontend) {
+        this.clsFrontendController.process_Command(stJobFrontend);
     }
 
     /**
@@ -75,5 +76,11 @@ export class CLS_BackendBridge {
                 sectionId: stFrontendToBackendData.sectionId,
             },
         });
+    }
+    /** Serializes events and uses an injected transport; without transport, returns prepared JSON only. */
+    send_Message(stFrontendToBackendData) {
+        const json_Message = this.convert_Data_From_Frontend_To_Backend(stFrontendToBackendData);
+        if (this.transport) return this.transport(json_Message);
+        return json_Message;
     }
 }

@@ -1,45 +1,67 @@
-import { E_CommandType } from '../domain/DUT/ENUM/E_CommandType.js';
-import { E_EventType } from '../domain/DUT/ENUM/E_EventType.js';
-import { E_FrontendEvent } from '../domain/DUT/ENUM/E_FrontendEvent.js';
-import { ST_FrontendToBackendData } from '../domain/DUT/STRUCT/ST_FrontendToBackendData.js';
+import { E_CommandType }                from '../domain/DUT/ENUM/E_CommandType.js';
+import { E_EventType }                  from '../domain/DUT/ENUM/E_EventType.js';
+import { E_FrontendEvent }              from '../domain/DUT/ENUM/E_FrontendEvent.js';
+import { ST_FrontendToBackendData }     from '../domain/DUT/STRUCT/ST_FrontendToBackendData.js';
+import { CLS_View }                     from '../domain/CLS_View.js';
+import { CLS_EventManager }             from './CLS_EventManager.js';
 
-/** Central frontend orchestrator; Viewer routing and network delivery are pending. */
+/** Routes commands to individual Views and events to the backend bridge. */
 export class CLS_FrontendController {
-    /** Stores the injected bridge without creating a circular module dependency. */
-    constructor(clsBackendBridge) {
-        this.clsBackendBridge = clsBackendBridge;
+    /** Stores dependencies and an instance-only View registry. */
+    constructor(clsBackendBridge, clsViewClass = CLS_View) {
+        this.clsBackendBridge  = clsBackendBridge;
+        this.clsViewClass      = clsViewClass;
+        this.views             = new Map();
+        this.clsEventManager   = new CLS_EventManager(this);
     }
 
-    /** Identifies supported commands and reports the missing Viewer interface without changing Views. */
-    process_Command(stBackendToFrontendData) {
-        const command_Type = stBackendToFrontendData.commandType;
-        const section_Id   = stBackendToFrontendData.sectionId;
+    /** Returns the View instance associated with a backend section identifier. */
+    get_View(sectionId) {
+        return this.views.get(sectionId);
+    }
 
-        switch (command_Type) {
-            case E_CommandType.OPEN:
-            case E_CommandType.CLOSE:
-                throw new Error(`Viewer interface is not available for ${command_Type} on section ${section_Id}.`);
-            default:
-                return;
+    /** Routes full OPEN jobs and minimal CLOSE commands without accessing the DOM. */
+    process_Command(stJobFrontend) {
+        const command_Type = stJobFrontend.commandType;
+        const section_Id   = stJobFrontend.sectionId;
+        if (command_Type !== E_CommandType.OPEN && command_Type !== E_CommandType.CLOSE) return;
+        if (section_Id === undefined || section_Id === null || section_Id === '') {
+            throw new Error('A command requires a sectionId.');
         }
+        let clsView = this.get_View(section_Id);
+        if (command_Type === E_CommandType.OPEN) {
+            if (clsView) throw new Error('Duplicate View for section ' + section_Id + '.');
+            clsView = new this.clsViewClass(section_Id, this.clsEventManager);
+            this.views.set(section_Id, clsView);
+            try {
+                return clsView.process_Command(stJobFrontend);
+            } catch (error) {
+                if (!clsView.isOpen && this.get_View(section_Id) === clsView) {
+                    try { clsView.dispose(); }
+                    finally { this.views.delete(section_Id); }
+                }
+                throw error;
+            }
+        }
+        if (!clsView) throw new Error('Unknown View for section ' + section_Id + '.');
+        return clsView.process_Command({ commandType: E_CommandType.CLOSE, sectionId: section_Id });
     }
 
-    /** Prepares reported confirmations through the bridge; returns JSON without claiming network delivery. */
-    process_Event(stFrontendEvent) {
+    /** Forwards requests and effective confirmations, rejecting stale View events. */
+    process_Event(stFrontendEvent, clsView) {
         const event_Type = stFrontendEvent.eventType;
         const section_Id = stFrontendEvent.sectionId;
-
-        if (event_Type === E_FrontendEvent.CLOSE) {
-            throw new Error(`The backend contract for a user CLOSE request on section ${section_Id} is not defined.`);
+        const clsCurrentView = this.get_View(section_Id);
+        if (!clsCurrentView || clsCurrentView !== clsView || clsView.sectionId !== section_Id) return;
+        if (![E_FrontendEvent.OPEN, E_FrontendEvent.CLOSE, E_EventType.OPENED, E_EventType.CLOSED].includes(event_Type)) return;
+        if (event_Type === E_EventType.OPENED && !clsView.isOpen) return;
+        if (event_Type === E_EventType.CLOSED) {
+            if (clsView.isOpen) return;
+            this.views.delete(section_Id);
         }
-        if (event_Type !== E_EventType.OPENED && event_Type !== E_EventType.CLOSED) {
-            return;
-        }
-
-        const stFrontendToBackendData     = new ST_FrontendToBackendData();
+        const stFrontendToBackendData = new ST_FrontendToBackendData();
         stFrontendToBackendData.eventType = event_Type;
         stFrontendToBackendData.sectionId = section_Id;
-
-        return this.clsBackendBridge.convert_Data_From_Frontend_To_Backend(stFrontendToBackendData);
+        return this.clsBackendBridge.send_Message(stFrontendToBackendData);
     }
 }

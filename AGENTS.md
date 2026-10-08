@@ -84,7 +84,7 @@ Responsibilities:
 - It is the frontend technical boundary toward the backend.
 - Receive backend-side data.
 - Perform only the technical conversion/deserialization required to obtain clean JavaScript-side data.
-- Pass received JavaScript-side data to `CLS_FrontendController.process_Command(stBackendToFrontendData)`.
+- Pass received JavaScript-side data to `CLS_FrontendController.process_Command(stJobFrontend)`.
 - Send frontend-to-backend data to the backend.
 
 Rules:
@@ -96,13 +96,13 @@ Rules:
 ## CLS_FrontendController
 Responsibilities:
 - Central orchestration and routing, directly between the bridge and Views.
-- `process_Command(stBackendToFrontendData)` is the sole backend-to-frontend command entry point; it routes commands through established Viewer interfaces only.
+- `process_Command(stJobFrontend)` is the sole backend-to-frontend command entry point; it routes commands through established Viewer interfaces only.
 - `process_Event(stFrontendEvent)` handles normalized frontend events in the Frontend -> Backend direction.
 - Build the required `ST_FrontendToBackendData` and pass it to `CLS_BackendBridge`.
 - Preserve backend values and pass the same `stFrontendJob` to the View when appropriate.
 
 Do not move DOM construction or content rendering into this class.
-Do not maintain a redundant frontend collection of Views or Sections.
+Maintain this.views = new Map() as an instance-only registry: sectionId -> CLS_View. Do not duplicate jobs or backend Section state.
 The exact incoming data envelope and command contract remain TODOs until established by backend documentation; do not invent fields.
 
 ## Section identity and visual state
@@ -111,7 +111,7 @@ The exact incoming data envelope and command contract remain TODOs until establi
 - Each View/DOM container must be identifiable directly through the backend-provided `sectionId`.
 - A command concerning a `sectionId` locates the corresponding View/DOM container using that identity.
 - View events use the same `sectionId` to identify the backend Section.
-- Do not introduce another frontend View ID, `jobId`, or a redundant View dictionary/map.
+- Do not introduce another frontend View ID or jobId. The controller Map stores View references only.
 - The precise DOM identity mechanism is deferred to implementation; no new identity contract is defined here.
 
 ## CLS_View
@@ -176,7 +176,7 @@ Do not confuse `ST_FrontendEvent` with `ST_FrontendToBackendData`.
 This is the contract used for data leaving the frontend toward the backend.
 
 For V1 confirmations of completed View actions, it contains:
-- eventType: E_EventType.OPENED or E_EventType.CLOSED
+- eventType: E_FrontendEvent.OPEN/CLOSE requests or E_EventType.OPENED/CLOSED confirmations
 - sectionId
 
 `CLS_FrontendController` determines/builds this data from the frontend event.
@@ -204,8 +204,8 @@ The required V1 CLOSE event sequence is:
 1. A View produces a CLOSE interaction carrying its backend-provided `sectionId`.
 2. `CLS_EventManager` creates `stFrontendEvent` with `eventType` and `sectionId`.
 3. `CLS_FrontendController.process_Event(stFrontendEvent)` receives it.
-4. The wire contract for the user CLOSE request remains unresolved; do not serialize it as an OPENED or CLOSED confirmation.
-5. Once the user request contract is established, Controller forwards it through `CLS_BackendBridge`.
+4. Controller forwards user OPEN/CLOSE requests using eventType and sectionId, without treating them as confirmations.
+5. Controller forwards the structure through CLS_BackendBridge.send_Message; absent transport produces prepared JSON only.
 6. BackendBridge sends it to the backend, which remains responsible for Section lifecycle.
 
 Backend commands return through BackendBridge -> FrontendController -> View -> specialized Renderer -> DOM.
@@ -225,7 +225,7 @@ Do not add a direct EventManager -> Backend path or bypass the controller.
 
 - ST_BackendToFrontendData carries commandType from E_CommandType (OPEN, CLOSE), sectionId, fileName, fileType, filePath, and stJobLayout. Opening data remains inside the data envelope; CLOSE may carry only commandType and sectionId.
 - ST_FrontendToBackendData uses eventType from E_EventType (OPENED, CLOSED) and sectionId; the former event field is removed.
-- Internal E_FrontendEvent.CLOSE remains a user request, not a CLOSED confirmation. Its network contract remains to be established.
+- Internal E_FrontendEvent.OPEN/CLOSE are user requests carried by eventType, distinct from OPENED/CLOSED confirmations. Python request handling remains to be integrated.
 - Emit confirmations only after the action succeeds, never merely on receipt of a command. ERROR is not validated.
 
 ## Message types
@@ -295,3 +295,9 @@ For every meaningful implementation change:
 - Check that frontend events are routed through `CLS_FrontendController`.
 - Check that backend-bound data passes through `CLS_BackendBridge`.
 - Do not report a test as successful unless it was actually executed and passed.
+
+## V1 View integration
+
+- CLS_View owns one minimal DOM container and the unchanged opening job. Rendering and layout remain deferred.
+- View events pass through CLS_EventManager; the originating CLS_View reference is forwarded separately from ST_FrontendEvent for stale-event checks.
+- Remove registry references only after effective CLOSED, or cleanup following failed initialization. Reject duplicate OPEN and unknown CLOSE using the existing Error mechanism.
