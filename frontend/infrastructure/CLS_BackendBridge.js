@@ -35,17 +35,20 @@ export class CLS_BackendBridge {
      */
     convert_Data_From_Backend_To_Frontend(jsonData) {
         const stBackendToFrontendData       = new ST_BackendToFrontendData();
+        stBackendToFrontendData.commandType = jsonData.commandType;
         stBackendToFrontendData.fileName    = jsonData.fileName;
         stBackendToFrontendData.fileType    = jsonData.fileType;
         stBackendToFrontendData.filePath    = jsonData.filePath;
         stBackendToFrontendData.sectionId   = jsonData.sectionId;
 
-        const stJobLayout                   = new ST_JobLayout();
-        stJobLayout.x                       = jsonData.stJobLayout.x;
-        stJobLayout.y                       = jsonData.stJobLayout.y;
-        stJobLayout.width                   = jsonData.stJobLayout.width;
-        stJobLayout.height                  = jsonData.stJobLayout.height;
-        stBackendToFrontendData.stJobLayout = stJobLayout;
+        if (jsonData.stJobLayout !== undefined) {
+            const stJobLayout                   = new ST_JobLayout();
+            stJobLayout.x                       = jsonData.stJobLayout.x;
+            stJobLayout.y                       = jsonData.stJobLayout.y;
+            stJobLayout.width                   = jsonData.stJobLayout.width;
+            stJobLayout.height                  = jsonData.stJobLayout.height;
+            stBackendToFrontendData.stJobLayout = stJobLayout;
+        }
 
         return stBackendToFrontendData;
     }
@@ -59,7 +62,7 @@ export class CLS_BackendBridge {
     }
 
     /**
-     * Serializes the event and sectionId fields in an EVENT envelope.
+     * Serializes the eventType and sectionId confirmation fields in an EVENT envelope.
      * @param {import('../domain/DUT/STRUCT/ST_FrontendToBackendData.js').ST_FrontendToBackendData} stFrontendToBackendData
      * Event data intended for the backend.
      * @returns {string} JSON message prepared for transport to the backend.
@@ -68,7 +71,7 @@ export class CLS_BackendBridge {
         return JSON.stringify({
             messageType: E_MessageType.EVENT,
             data: {
-                event:     stFrontendToBackendData.event,
+                eventType: stFrontendToBackendData.eventType,
                 sectionId: stFrontendToBackendData.sectionId,
             },
         });

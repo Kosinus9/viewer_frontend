@@ -176,8 +176,8 @@ Do not confuse `ST_FrontendEvent` with `ST_FrontendToBackendData`.
 ## ST_FrontendToBackendData
 This is the contract used for data leaving the frontend toward the backend.
 
-For the V1 CLOSE flow, it contains the information required by the backend, including:
-- event
+For V1 confirmations of completed View actions, it contains:
+- eventType: E_EventType.OPENED or E_EventType.CLOSED
 - sectionId
 
 `CLS_FrontendController` determines/builds this data from the frontend event.
@@ -205,8 +205,8 @@ The required V1 CLOSE event sequence is:
 1. A View produces a CLOSE interaction carrying its backend-provided `sectionId`.
 2. `CLS_EventManager` creates `stFrontendEvent` with `eventType` and `sectionId`.
 3. `CLS_FrontendController.process_Event(stFrontendEvent)` receives it.
-4. Controller creates the required `ST_FrontendToBackendData`.
-5. Controller sends it to `CLS_BackendBridge`.
+4. The wire contract for the user CLOSE request remains unresolved; do not serialize it as an OPENED or CLOSED confirmation.
+5. Once the user request contract is established, Controller forwards it through `CLS_BackendBridge`.
 6. BackendBridge sends it to the backend, which remains responsible for Section lifecycle.
 
 Backend commands return through BackendBridge -> FrontendController -> View -> specialized Renderer -> DOM.
@@ -221,6 +221,13 @@ Do not add a direct EventManager -> Backend path or bypass the controller.
 - Do not merge Display Manager responsibilities into Viewer.
 - Do not implement speculative features outside the current task.
 - Multiple Views must remain independently identifiable by `sectionId`.
+
+## Command and confirmation contracts
+
+- ST_BackendToFrontendData carries commandType from E_CommandType (OPEN, CLOSE), sectionId, fileName, fileType, filePath, and stJobLayout. Opening data remains inside the data envelope; CLOSE may carry only commandType and sectionId.
+- ST_FrontendToBackendData uses eventType from E_EventType (OPENED, CLOSED) and sectionId; the former event field is removed.
+- Internal E_FrontendEvent.CLOSE remains a user request, not a CLOSED confirmation. Its network contract remains to be established.
+- Emit confirmations only after the action succeeds, never merely on receipt of a command. ERROR is not validated.
 
 ## Message types
 
