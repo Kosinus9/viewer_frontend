@@ -6,7 +6,7 @@ import { E_MessageType }           from '../domain/DUT/ENUM/E_MessageType.js';
 export class CLS_BackendBridge {
     /**
      * Stores the controller reference provided by the caller.
-     * @param {{ process_Data: function(ST_BackendToFrontendData): void }} clsFrontendController
+     * @param {{ process_Command: function(ST_BackendToFrontendData): void }} clsFrontendController
      * Controller instance that receives incoming data.
      */
     constructor(clsFrontendController) {
@@ -55,10 +55,10 @@ export class CLS_BackendBridge {
 
     /**
      * Forwards the same instance to the controller without conversion or business logic.
-     * @param {ST_BackendToFrontendData} stBackendToFrontendData Data to forward to process_Data.
+     * @param {ST_BackendToFrontendData} stBackendToFrontendData Data to forward to process_Command.
      */
     send_Data_To_Frontend_Controller(stBackendToFrontendData) {
-        this.clsFrontendController.process_Data(stBackendToFrontendData);
+        this.clsFrontendController.process_Command(stBackendToFrontendData);
     }
 
     /**

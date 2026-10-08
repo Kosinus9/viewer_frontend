@@ -84,7 +84,7 @@ Responsibilities:
 - It is the frontend technical boundary toward the backend.
 - Receive backend-side data.
 - Perform only the technical conversion/deserialization required to obtain clean JavaScript-side data.
-- Pass received JavaScript-side data to `CLS_FrontendController.process_Data(stBackendToFrontendData)`.
+- Pass received JavaScript-side data to `CLS_FrontendController.process_Command(stBackendToFrontendData)`.
 - Send frontend-to-backend data to the backend.
 
 Rules:
@@ -96,8 +96,7 @@ Rules:
 ## CLS_FrontendController
 Responsibilities:
 - Central orchestration and routing, directly between the bridge and Views.
-- `process_Data(stBackendToFrontendData)` receives backend-to-frontend data and extracts/prepares information required by the frontend.
-- `process_Command(command)` routes/triggers the frontend action after incoming data has been prepared.
+- `process_Command(stBackendToFrontendData)` is the sole backend-to-frontend command entry point; it routes commands through established Viewer interfaces only.
 - `process_Event(stFrontendEvent)` handles normalized frontend events in the Frontend -> Backend direction.
 - Build the required `ST_FrontendToBackendData` and pass it to `CLS_BackendBridge`.
 - Preserve backend values and pass the same `stFrontendJob` to the View when appropriate.
