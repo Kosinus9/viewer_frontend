@@ -28,7 +28,7 @@ test('OPEN creates independent instances and preserves the exact job; duplicates
     const { clsController, sent_Events } = setup();
     const stJob = job('a');
     clsController.process_Command(stJob); clsController.process_Command(job('b'));
-    assert.equal(clsController.views.size, 2);
+    assert.equal(clsController.mapViews.size, 2);
     assert.notEqual(clsController.get_View('a'), clsController.get_View('b'));
     assert.equal(clsController.get_View('a').commands[0], stJob);
     assert.throws(() => clsController.process_Command(job('a')), /Duplicate/);
@@ -73,7 +73,7 @@ test('unknown commands are ignored and unknown CLOSE does not create a View', ()
     const { clsController } = setup();
     clsController.process_Command({ commandType: 'UNKNOWN', sectionId: 'a' });
     assert.throws(() => clsController.process_Command({ commandType: 'CLOSE', sectionId: 'a' }), /Unknown/);
-    assert.equal(clsController.views.size, 0);
+    assert.equal(clsController.mapViews.size, 0);
 });
 
 test('failed initialization disposes its instance and removes its reference', () => {
@@ -83,10 +83,10 @@ test('failed initialization disposes its instance and removes its reference', ()
         /** Records its instance before simulating an initialization failure. */
         process_Command() { clsFailedView = this; throw new Error('Initialization failed'); }
     }
-    clsController.clsViewClass = CLS_FailedView;
+    clsController.ViewClass = CLS_FailedView;
     assert.throws(() => clsController.process_Command(job('a')), /Initialization failed/);
     assert.equal(clsFailedView.disposed, true);
-    assert.equal(clsController.views.size, 0);
+    assert.equal(clsController.mapViews.size, 0);
 });
 
 test('controller routing does not access the DOM', () => {
@@ -126,7 +126,7 @@ test('real View creates/removes DOM, X requests closure, bridge retains JSON con
         assert.equal(root.children.length, 1); assert.equal(json_Messages[1].data.eventType, 'CLOSE');
         clsController.process_Command({ commandType: 'CLOSE', sectionId: 'a' });
         assert.equal(root.children.length, 0); assert.equal(button.handlers.size, 0);
-        assert.equal(clsController.views.size, 0); assert.equal(json_Messages[2].data.eventType, 'CLOSED');
+        assert.equal(clsController.mapViews.size, 0); assert.equal(json_Messages[2].data.eventType, 'CLOSED');
         assert.ok(json_Messages.every(message => message.data.sectionId === 'a'));
     } finally { if (original === undefined) delete globalThis.document; else globalThis.document = original; }
 });

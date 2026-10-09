@@ -102,7 +102,7 @@ Responsibilities:
 - Preserve backend values and pass the same `stFrontendJob` to the View when appropriate.
 
 Do not move DOM construction or content rendering into this class.
-Maintain this.views = new Map() as an instance-only registry: sectionId -> CLS_View. Do not duplicate jobs or backend Section state.
+Maintain this.mapViews = new Map() as an instance-only registry: sectionId -> CLS_View. Do not duplicate jobs or backend Section state.
 The exact incoming data envelope and command contract remain TODOs until established by backend documentation; do not invent fields.
 
 ## Section identity and visual state

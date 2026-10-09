@@ -1,6 +1,6 @@
-import { E_CommandType } from './DUT/ENUM/E_CommandType.js';
-import { E_EventType } from './DUT/ENUM/E_EventType.js';
-import { E_FrontendEvent } from './DUT/ENUM/E_FrontendEvent.js';
+import { E_CommandType }     from './DUT/ENUM/E_CommandType.js';
+import { E_EventType }       from './DUT/ENUM/E_EventType.js';
+import { E_FrontendEvent }   from './DUT/ENUM/E_FrontendEvent.js';
 
 /** Owns one minimal DOM window; rendering and layout are deferred. */
 export class CLS_View {
@@ -20,18 +20,20 @@ export class CLS_View {
 
         if (stJobFrontend.commandType === E_CommandType.OPEN) {
             if (this.isOpen) throw new Error('View is already open.');
+
             const root_Element = document.getElementById('viewer');
             if (!root_Element) throw new Error('Viewer DOM root is missing.');
             this.stFrontendJob                = stJobFrontend;
             this.container                    = document.createElement('section');
             this.container.className          = 'view';
             this.container.dataset.sectionId  = this.sectionId;
+
             const button_Element              = document.createElement('button');
             button_Element.type               = 'button';
             button_Element.className          = 'view-close';
             button_Element.textContent        = 'X';
             this.close_Handler                = () => this.clsEventManager.event_Processing(E_FrontendEvent.CLOSE, this.sectionId, this);
-            this.closeButton = button_Element;
+            this.closeButton                  = button_Element;
 
             button_Element.addEventListener('click', this.close_Handler);
             this.container.appendChild(button_Element);
