@@ -1,60 +1,108 @@
-import { E_CommandType }     from './DUT/ENUM/E_CommandType.js';
-import { E_EventType }       from './DUT/ENUM/E_EventType.js';
-import { E_FrontendEvent }   from './DUT/ENUM/E_FrontendEvent.js';
+import { E_CommandType }        from './DUT/ENUM/E_CommandType.js';
+import { E_EventType }          from './DUT/ENUM/E_EventType.js';
+import { E_FrontendEvent }      from './DUT/ENUM/E_FrontendEvent.js';
 
-/** Owns one minimal DOM window; rendering and layout are deferred. */
+/** Owns one HTML window and its layout; content rendering is deferred. */
 export class CLS_View {
-    /** Stores section identity and the event manager for this single window. */
+    /** Initializes the identity, lifecycle state and resources of one window. */
     constructor(sectionId, clsEventManager) {
-        this.sectionId        = sectionId;
-        this.clsEventManager  = clsEventManager;
-        this.isOpen           = false;
-        this.container        = null;
-        this.stFrontendJob    = null;
+        // Backend-provided identifier for this window and its events.
+        this.sectionId              = sectionId;
+        // Normalizes View events and forwards them to the controller.
+        this.clsEventManager        = clsEventManager;
+        // Indicates whether the HTML window has been successfully opened.
+        this.isOpen                 = false;
+        // Root section element owned by this View.
+        this.container              = null;
+        // Button that requests backend-authorized closure.
+        this.closeButton            = null;
+        // Stored click callback, retained for listener removal during cleanup.
+        this.close_Handler          = null;
+        // Original opening job, retained without changing backend values.
+        this.stFrontendJob          = null;
+        // Reserved reference to the future content renderer instance.
+        this.clsRenderer            = null;
+        // View-owned content element reserved as the future renderer target.
+        this.contentContainer       = null;
     }
 
-    /** Executes an authorized command and confirms only completed DOM operations. */
+    /** Executes authorized commands and confirms only successfully installed or removed windows. */
     execute_Command(stJobFrontend) {
-        if (stJobFrontend.sectionId !== this.sectionId)
-            throw new Error('View sectionId mismatch.');
-
+        if (stJobFrontend.sectionId !== this.sectionId) throw new Error('View sectionId mismatch.');
         if (stJobFrontend.commandType === E_CommandType.OPEN) {
             if (this.isOpen) throw new Error('View is already open.');
+            try {
+                const root_Element = document.getElementById('viewer');
 
-            const root_Element = document.getElementById('viewer');
-            if (!root_Element) throw new Error('Viewer DOM root is missing.');
-            this.stFrontendJob                = stJobFrontend;
-            this.container                    = document.createElement('section');
-            this.container.className          = 'view';
-            this.container.dataset.sectionId  = this.sectionId;
+                if (!root_Element) throw new Error('Viewer DOM root is missing.');
 
-            const button_Element              = document.createElement('button');
-            button_Element.type               = 'button';
-            button_Element.className          = 'view-close';
-            button_Element.textContent        = 'X';
-            this.close_Handler                = () => this.clsEventManager.event_Processing(E_FrontendEvent.CLOSE, this.sectionId, this);
-            this.closeButton                  = button_Element;
+                const stJobLayout = stJobFrontend.stJobLayout;
 
-            button_Element.addEventListener('click', this.close_Handler);
-            this.container.appendChild(button_Element);
-            root_Element.appendChild(this.container);
-            this.isOpen                       = true;
+                if (!stJobLayout || !['x', 'y', 'width', 'height'].every(field_Name => Number.isFinite(stJobLayout[field_Name])) ||
+                    stJobLayout.width <= 0 || stJobLayout.height <= 0) {
+                    throw new Error('View layout requires finite numeric x/y and positive width/height in pixels.');
+                }
+                
+                this.stFrontendJob                  = stJobFrontend;
+                this.container                      = document.createElement('section');
+                this.container.className            = 'view';
+                this.container.dataset.sectionId    = this.sectionId;
+                this.container.style.left           = stJobLayout.x + 'px';
+                this.container.style.top            = stJobLayout.y + 'px';
+                this.container.style.width          = stJobLayout.width + 'px';
+                this.container.style.height         = stJobLayout.height + 'px';
+
+                const header_Element                = document.createElement('header');
+                header_Element.className            = 'view-header';
+
+                const title_Element                 = document.createElement('span');
+                title_Element.className             = 'view-title';
+                title_Element.textContent           = stJobFrontend.fileName;
+                this.closeButton                    = document.createElement('button');
+                this.closeButton.type               = 'button';
+                this.closeButton.className          = 'view-close';
+                this.closeButton.textContent        = 'X';
+
+                this.close_Handler                  = () => this.request_Close();
+                this.closeButton.addEventListener('click', this.close_Handler);
+                header_Element.appendChild(title_Element);
+                header_Element.appendChild(this.closeButton);
+                this.contentContainer               = document.createElement('div');
+                this.contentContainer.className     = 'view-content';
+                this.container.appendChild(header_Element);
+                this.container.appendChild(this.contentContainer);
+                root_Element.appendChild(this.container);
+                this.isOpen                         = true;
+            } catch (error) {
+                try { this.release_View_Resources(); }
+                catch { /* Preserve the original construction error for the controller. */ }
+                throw error;
+            }
             return this.clsEventManager.event_Processing(E_EventType.OPENED, this.sectionId, this);
         }
         if (stJobFrontend.commandType === E_CommandType.CLOSE && this.isOpen) {
-            this.dispose();
+            this.release_View_Resources();
             return this.clsEventManager.event_Processing(E_EventType.CLOSED, this.sectionId, this);
         }
     }
 
-    /** Releases this window's DOM and handlers, including after failed initialization. */
-    dispose() {
+    /** Requests backend-authorized closure without removing this window. */
+    request_Close() {
+        if (!this.isOpen) return;
+        return this.clsEventManager.event_Processing(E_FrontendEvent.CLOSE, this.sectionId, this);
+    }
+
+    /** Idempotently releases DOM resources without emitting a lifecycle confirmation. */
+    release_View_Resources() {
         if (this.closeButton) this.closeButton.removeEventListener('click', this.close_Handler);
         if (this.container) this.container.remove();
-        this.isOpen        = false;
-        this.container     = null;
-        this.closeButton   = null;
-        this.close_Handler = null;
-        this.stFrontendJob = null;
+        this.isOpen                 = false;
+        this.container              = null;
+        this.closeButton            = null;
+        this.close_Handler          = null;
+        this.contentContainer       = null;
+        this.stFrontendJob          = null;
+        // Renderer cleanup must be connected once its release interface is defined.
+        this.clsRenderer            = null;
     }
 }

@@ -1,11 +1,51 @@
 html,
 body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
+    width:          100%;
+    height:         100%;
+    margin:         0;
 }
 
 #viewer {
-    width: 100%;
-    height: 100%;
+    position:       relative;
+    width:          100%;
+    height:         100%;
+}
+
+.view {
+    position:       absolute;
+    box-sizing:     border-box;
+    display:        flex;
+    flex-direction: column;
+    overflow:       hidden;
+    border:         1px solid #777;
+    border-radius:  6px;
+    background:     #fff;
+}
+
+.view-header {
+    display:        flex;
+    align-items:    center;
+    gap:            8px;
+    flex-shrink:    0;
+    padding:        4px 8px;
+    background:     #eee;
+}
+
+.view-title {
+    flex:           1;
+    min-width:      0;
+    overflow:       hidden;
+    text-overflow:  ellipsis;
+    white-space:    nowrap;
+}
+
+.view-close {
+    flex-shrink:    0;
+    cursor:         pointer;
+}
+
+.view-content {
+    flex:           1;
+    min-height:     0;
+    overflow:       auto;
 }

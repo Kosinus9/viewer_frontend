@@ -38,7 +38,7 @@ export class CLS_FrontendController {
                 return clsView.execute_Command(stJobFrontend);
             } catch (error) {
                 if (!clsView.isOpen && this.get_View(section_Id) === clsView) {
-                    try { clsView.dispose(); }
+                    try { clsView.release_View_Resources(); }
                     finally { this.mapViews.delete(section_Id); }
                 }
                 throw error;
