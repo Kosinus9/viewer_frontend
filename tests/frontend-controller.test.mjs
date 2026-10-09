@@ -8,7 +8,7 @@ class CLS_TestView {
     /** Records the dependencies of one simulated window. */
     constructor(sectionId, clsEventManager) { this.sectionId = sectionId; this.clsEventManager = clsEventManager; this.commands = []; this.isOpen = false; }
     /** Records commands without generating premature confirmations. */
-    process_Command(stData) { this.commands.push(stData); }
+    execute_Command(stData) { this.commands.push(stData); }
     /** Records cleanup after failed initialization. */
     dispose() { this.disposed = true; }
 }
@@ -81,7 +81,7 @@ test('failed initialization disposes its instance and removes its reference', ()
     let clsFailedView;
     class CLS_FailedView extends CLS_TestView {
         /** Records its instance before simulating an initialization failure. */
-        process_Command() { clsFailedView = this; throw new Error('Initialization failed'); }
+        execute_Command() { clsFailedView = this; throw new Error('Initialization failed'); }
     }
     clsController.ViewClass = CLS_FailedView;
     assert.throws(() => clsController.process_Command(job('a')), /Initialization failed/);

@@ -35,7 +35,7 @@ export class CLS_FrontendController {
             clsView = new this.ViewClass(section_Id, this.clsEventManager);
             this.mapViews.set(section_Id, clsView);
             try {
-                return clsView.process_Command(stJobFrontend);
+                return clsView.execute_Command(stJobFrontend);
             } catch (error) {
                 if (!clsView.isOpen && this.get_View(section_Id) === clsView) {
                     try { clsView.dispose(); }
@@ -45,7 +45,7 @@ export class CLS_FrontendController {
             }
         }
         if (!clsView) throw new Error('Unknown View for section ' + section_Id + '.');
-        return clsView.process_Command({ commandType: E_CommandType.CLOSE, sectionId: section_Id });
+        return clsView.execute_Command({ commandType: E_CommandType.CLOSE, sectionId: section_Id });
     }
 
     /** Forwards requests and effective confirmations, rejecting stale View events. */

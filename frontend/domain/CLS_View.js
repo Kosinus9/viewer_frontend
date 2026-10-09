@@ -14,7 +14,7 @@ export class CLS_View {
     }
 
     /** Executes an authorized command and confirms only completed DOM operations. */
-    process_Command(stJobFrontend) {
+    execute_Command(stJobFrontend) {
         if (stJobFrontend.sectionId !== this.sectionId)
             throw new Error('View sectionId mismatch.');
 

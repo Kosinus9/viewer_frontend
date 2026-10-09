@@ -19,10 +19,10 @@ Keep responsibilities grouped as follows:
 
 frontend/
 - application/
-  - FrontendController.js
-  - EventManager.js
+  - CLS_FrontendController.js
+  - CLS_EventManager.js
 - domain/
-  - View.js
+  - CLS_View.js
   - DUT/
     - ENUM/
       - E_FrontendEvent.js
@@ -32,13 +32,13 @@ frontend/
       - ST_FrontendEvent.js
       - ST_FrontendToBackendData.js
   - renderer/
-    - FrontendRenderer.js
-    - PDFRenderer.js
-    - ImageRenderer.js
-    - VideoRenderer.js
-    - TextRenderer.js
+    - CLS_FrontendRenderer.js
+    - CLS_PDFRenderer.js
+    - CLS_ImageRenderer.js
+    - CLS_VideoRenderer.js
+    - CLS_TextRenderer.js
 - infrastructure/
-  - BackendBridge.js
+  - CLS_BackendBridge.js
 - index.html
 - styles.css
 
@@ -102,6 +102,7 @@ Responsibilities:
 - Preserve backend values and pass the same `stFrontendJob` to the View when appropriate.
 
 Do not move DOM construction or content rendering into this class.
+Use ViewClass for the injected View constructor and clsView for a concrete instance.
 Maintain this.mapViews = new Map() as an instance-only registry: sectionId -> CLS_View. Do not duplicate jobs or backend Section state.
 The exact incoming data envelope and command contract remain TODOs until established by backend documentation; do not invent fields.
 
@@ -115,6 +116,8 @@ The exact incoming data envelope and command contract remain TODOs until establi
 - The precise DOM identity mechanism is deferred to implementation; no new identity contract is defined here.
 
 ## CLS_View
+
+- The controller retains process_Command(stJobFrontend); each View executes commands through execute_Command(stJobFrontend).
 Responsibilities:
 - Represent one independent visual container/window/zone.
 - Retain its `stFrontendJob`.
@@ -130,16 +133,16 @@ Rules:
 - `fileName` remains available to the View and is not required by the Renderer in V1 unless needed later.
 
 ## Renderers
-`FrontendRenderer` is the base renderer abstraction.
+`CLS_FrontendRenderer` is the base renderer abstraction.
 Specialized renderers:
-- `PDFRenderer`
-- `ImageRenderer`
-- `VideoRenderer`
-- `TextRenderer`
+- `CLS_PDFRenderer`
+- `CLS_ImageRenderer`
+- `CLS_VideoRenderer`
+- `CLS_TextRenderer`
 
 Rules:
 - At runtime, `CLS_View` selects and uses the specialized Renderer directly.
-- Do not insert `FrontendRenderer` as an unnecessary runtime intermediary.
+- Do not insert `CLS_FrontendRenderer` as an unnecessary runtime intermediary.
 - A Renderer renders content into the DOM target/container owned by its View.
 - A Renderer manages content, not View geometry, View lifecycle or global layout.
 - Do not make a Renderer responsible for CLOSE or other View-level controls.
