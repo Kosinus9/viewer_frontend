@@ -241,3 +241,53 @@ test('multiple real Views own separate DOM and close independently', () => with_
     assert.equal(dom_State.root.children.length, 1); assert.equal(dom_State.root.children[0], clsSecondView.container);
     assert.equal(clsController.get_View('a'), undefined); assert.equal(clsSecondView.isOpen, true);
 }));
+
+
+test('invalid jobs and missing command fields fail before DOM construction', () => {
+    const clsView = new CLS_View('a', { event_Processing: () => assert.fail('Unexpected event') });
+    clsView.create_Container = () => assert.fail('Invalid data reached DOM construction');
+    for (const invalid_Job of [undefined, null, false, 2, 'OPEN', [], {}, { commandType: 'OPEN' }, { sectionId: 'a' }, { commandType: '', sectionId: 'a' }]) {
+        assert.throws(() => clsView.execute_Command(invalid_Job), /valid job object|commandType and sectionId/);
+    }
+    assert.throws(() => clsView.execute_Command(job('b')), /mismatch/);
+    assert.equal(clsView.isOpen, false);
+    assert.equal(clsView.container, null);
+});
+
+test('OPEN validates fileName and delegates unchanged data before confirming success', () => with_Dom(dom_State => {
+    const event_Log = [];
+    const clsView = new CLS_View('a', { event_Processing: event_Type => event_Log.push(event_Type) });
+    const create_Container = clsView.create_Container;
+    let creation_Count = 0;
+    const stJob = job('a');
+    clsView.create_Container = function(stJobFrontend, root_Element) {
+        creation_Count++;
+        assert.equal(stJobFrontend, stJob);
+        assert.equal(root_Element, dom_State.root);
+        assert.equal(this.isOpen, false);
+        assert.deepEqual(event_Log, []);
+        return create_Container.call(this, stJobFrontend, root_Element);
+    };
+    for (const invalid_Name of [undefined, null, 123, {}]) {
+        assert.throws(() => clsView.execute_Command({ ...stJob, fileName: invalid_Name }), /fileName/);
+    }
+    assert.equal(creation_Count, 0);
+    clsView.execute_Command(stJob);
+    assert.equal(creation_Count, 1);
+    assert.deepEqual(event_Log, ['OPENED']);
+    clsView.execute_Command({ commandType: 'CLOSE', sectionId: 'a' });
+    assert.deepEqual(event_Log, ['OPENED', 'CLOSED']);
+}));
+
+
+test('renderer selection rejects unknown and undefined values without altering View lifecycle', () => {
+    const clsView = new CLS_View('a', { event_Processing: () => assert.fail('Selection must not emit events') });
+    const content_Element = {};
+    clsView.contentContainer = content_Element;
+    for (const file_Type of [undefined, null, 'UNKNOWN', 'PDF', 'IMAGE', 'VIDEO', 'TEXT']) {
+        assert.throws(() => clsView.choose_Special_Renderer(file_Type), /Unsupported fileType/);
+    }
+    assert.equal(clsView.contentContainer, content_Element);
+    assert.equal(clsView.clsRenderer, null);
+    assert.equal(clsView.isOpen, false);
+});
