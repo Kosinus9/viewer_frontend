@@ -22,7 +22,7 @@ function setup() {
     return { clsController, sent_Events };
 }
 /** Returns a full opening job without changing backend values. */
-function job(sectionId) { return { commandType: 'OPEN', sectionId, fileName: 'a', fileType: 'PDF', filePath: 'a.pdf', stJobLayout: { x: 2, y: 3, width: 4, height: 5 } }; }
+function job(sectionId) { return { commandType: 'OPEN', sectionId, fileName: 'a', fileType: 'text', filePath: 'a.txt', stJobLayout: { x: 2, y: 3, width: 4, height: 5 } }; }
 
 test('OPEN creates independent instances and preserves the exact job; duplicates fail', () => {
     const { clsController, sent_Events } = setup();

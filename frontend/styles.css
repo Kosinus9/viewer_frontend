@@ -45,7 +45,15 @@ body {
 }
 
 .view-content {
-    flex:           1;
-    min-height:     0;
-    overflow:       auto;
+    flex:               1;
+    min-height:         0;
+    overflow:           auto;
+    scrollbar-gutter:   stable;
+}
+
+.pdf-page {
+    display:        block;
+    width:          100%;
+    height:         auto;
+    margin-bottom:  8px;
 }

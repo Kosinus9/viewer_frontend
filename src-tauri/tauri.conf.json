@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "identifier": "com.tauri.dev",
   "build": {
-    "frontendDist": "../frontend"
+    "beforeDevCommand": "npm.cmd run dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm.cmd run build",
+    "frontendDist": "../dist"
    },
   "app": {
     "windows": [
@@ -17,7 +20,11 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["$DOCUMENT/Viewer-PDF-PoC/*.pdf"]
+      }
     }
   },
   "bundle": {

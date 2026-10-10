@@ -2,12 +2,13 @@ import { E_CommandType }        from './DUT/ENUM/E_CommandType.js';
 import { E_EventType }          from './DUT/ENUM/E_EventType.js';
 import { E_FrontendEvent }      from './DUT/ENUM/E_FrontendEvent.js';
 import { E_FileType }           from './DUT/ENUM/E_FileType.js';
-import { CLS_PDFRenderer }      from './renderer/CLS_PDFRenderer.js';
+
+import { CLS_RenderPDF }        from './renderer/CLS_RenderPDF.js';
 import { CLS_ImageRenderer }    from './renderer/CLS_ImageRenderer.js';
 import { CLS_VideoRenderer }    from './renderer/CLS_VideoRenderer.js';
 import { CLS_TextRenderer }     from './renderer/CLS_TextRenderer.js';
 
-/** Owns one HTML window and its layout; content rendering is deferred. */
+/** Owns one HTML window, its layout and its content renderer. */
 export class CLS_View {
     /** Initializes the identity, lifecycle state and resources of one window. */
     constructor(sectionId, clsEventManager) {
@@ -25,9 +26,9 @@ export class CLS_View {
         this.close_Handler          = null;
         // Original opening job, retained without changing backend values.
         this.stFrontendJob          = null;
-        // Reserved reference to the future content renderer instance.
+        // Content renderer owned by this View.
         this.clsRenderer            = null;
-        // View-owned content element reserved as the future renderer target.
+        // View-owned content element used as the renderer target.
         this.contentContainer       = null;
     }
 
@@ -61,8 +62,12 @@ export class CLS_View {
                 }
                 this.stFrontendJob                  = stJobFrontend;
                 this.create_Container(stJobFrontend, root_Element);
-                // Renderer selection requires E_FileType values and a contentContainer constructor contract.
-                // Future rendering will receive stJobFrontend.filePath after that interface is implemented.
+                if (stJobFrontend.fileType === E_FileType.PDF) {
+                    this.clsRenderer = this.choose_Special_Renderer(stJobFrontend.fileType);
+                    this.clsRenderer.render(stJobFrontend.filePath).catch(render_Error => {
+                        console.error('PDF rendering failed for section ' + this.sectionId, render_Error);
+                    });
+                }
                 this.isOpen                         = true;
                 
             } catch (error) {
@@ -111,7 +116,7 @@ export class CLS_View {
         root_Element.appendChild(this.container);
     }
 
-    /** Identifies the specialized renderer and reports unavailable enum or constructor contracts. */
+    /** Instantiates PDF rendering and preserves the deferred contracts of other renderers. */
     choose_Special_Renderer(fileType) {
         if (fileType === undefined || fileType === null) {
             throw new Error('Unsupported fileType: a defined E_FileType value is required.');
@@ -119,8 +124,7 @@ export class CLS_View {
         let RendererClass;
         switch (fileType) {
             case E_FileType.PDF:
-                RendererClass = CLS_PDFRenderer;
-                break;
+                return new CLS_RenderPDF(this.contentContainer);
             case E_FileType.IMAGE:
                 RendererClass = CLS_ImageRenderer;
                 break;
@@ -131,7 +135,7 @@ export class CLS_View {
                 RendererClass = CLS_TextRenderer;
                 break;
             default:
-                throw new Error('Unsupported fileType: ' + String(fileType) + '. E_FileType values are not yet defined locally.');
+                throw new Error('Unsupported fileType: ' + String(fileType) + '.');
         }
         // The existing renderer classes do not yet accept a contentContainer constructor argument.
         throw new Error(RendererClass.name + ' requires an implemented contentContainer constructor contract.');
@@ -145,6 +149,7 @@ export class CLS_View {
 
     /** Idempotently releases DOM resources without emitting a lifecycle confirmation. */
     release_View_Resources() {
+        if (this.clsRenderer) this.clsRenderer.release_Render_Resources();
         if (this.closeButton) this.closeButton.removeEventListener('click', this.close_Handler);
         if (this.container) this.container.remove();
         this.isOpen                 = false;
@@ -153,7 +158,6 @@ export class CLS_View {
         this.close_Handler          = null;
         this.contentContainer       = null;
         this.stFrontendJob          = null;
-        // Renderer cleanup must be connected once its release interface is defined.
         this.clsRenderer            = null;
     }
 }

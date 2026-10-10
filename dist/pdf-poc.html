@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PDF PoC</title>
+  <script type="module" crossorigin src="/assets/pdf_Poc-Cj5X7I6i.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/CLS_BackendBridge-BtMVofS9.js">
+  <link rel="stylesheet" crossorigin href="/assets/CLS_BackendBridge-DGAc7-TG.css">
+</head>
+<body>
+    <form id="pdf-poc-form">
+        <label>Chemin absolu du PDF local <input id="pdf-path" required size="65" placeholder="C:/Users/…/Documents/Viewer-PDF-PoC/document.pdf"></label>
+        <button>Ouvrir</button>
+        <button id="pdf-close" type="button">Envoyer CLOSE</button>
+        <output id="pdf-status"></output>
+    </form>
+    <main id="viewer"></main>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "app": {
+    "windows": [
+      { "label": "main", "title": "PDF PoC", "url": "pdf-poc.html", "width": 1000, "height": 800 }
+    ]
+  }
+}
