@@ -1,11 +1,11 @@
 import { E_CommandType }        from './DUT/ENUM/E_CommandType.js';
 import { E_EventType }          from './DUT/ENUM/E_EventType.js';
 import { E_FrontendEvent }      from './DUT/ENUM/E_FrontendEvent.js';
-import { E_FileType } from './DUT/ENUM/E_FileType.js';
-import { CLS_PDFRenderer } from './renderer/CLS_PDFRenderer.js';
-import { CLS_ImageRenderer } from './renderer/CLS_ImageRenderer.js';
-import { CLS_VideoRenderer } from './renderer/CLS_VideoRenderer.js';
-import { CLS_TextRenderer } from './renderer/CLS_TextRenderer.js';
+import { E_FileType }           from './DUT/ENUM/E_FileType.js';
+import { CLS_PDFRenderer }      from './renderer/CLS_PDFRenderer.js';
+import { CLS_ImageRenderer }    from './renderer/CLS_ImageRenderer.js';
+import { CLS_VideoRenderer }    from './renderer/CLS_VideoRenderer.js';
+import { CLS_TextRenderer }     from './renderer/CLS_TextRenderer.js';
 
 /** Owns one HTML window and its layout; content rendering is deferred. */
 export class CLS_View {

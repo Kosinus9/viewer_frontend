@@ -1,4 +1,4 @@
-import { CLS_FrontendRenderer } from './CLS_FrontendRenderer.js';
+import { CLS_RenderGeneric } from './CLS_RenderGeneric.js';
 
 /** Image content renderer. */
-export class CLS_ImageRenderer extends CLS_FrontendRenderer {}
+export class CLS_ImageRenderer extends CLS_RenderGeneric {}

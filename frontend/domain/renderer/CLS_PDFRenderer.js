@@ -1,4 +1,4 @@
-import { CLS_FrontendRenderer } from './CLS_FrontendRenderer.js';
+import { CLS_RenderGeneric } from './CLS_RenderGeneric.js';
 
 /** PDF content renderer; no rendering library is connected yet. */
-export class CLS_PDFRenderer extends CLS_FrontendRenderer {}
+export class CLS_PDFRenderer extends CLS_RenderGeneric {}
