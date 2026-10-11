@@ -57,3 +57,34 @@ body {
     height:         auto;
     margin-bottom:  8px;
 }
+
+/* Test-only surface reserves the controls' actual height above the Viewer. */
+body.pdf-poc {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.pdf-poc #viewer {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+}
+.poc-controls {
+    flex-shrink: 0;
+    padding: 8px;
+    max-height: 45vh;
+    overflow: auto;
+    box-sizing: border-box;
+    background: #eee;
+}
+.poc-controls p { margin: 0 0 6px; }
+.poc-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+.poc-row input { flex: 1; min-width: 180px; }
+.poc-row output { width: 260px; overflow-wrap: anywhere; }
+.poc-controls small { display: block; margin-top: 6px; }

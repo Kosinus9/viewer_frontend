@@ -2,6 +2,7 @@ import { E_CommandType }        from './DUT/ENUM/E_CommandType.js';
 import { E_EventType }          from './DUT/ENUM/E_EventType.js';
 import { E_FrontendEvent }      from './DUT/ENUM/E_FrontendEvent.js';
 import { E_FileType }           from './DUT/ENUM/E_FileType.js';
+import { trace_Instance }       from '../trace-execution.js';
 
 import { CLS_RenderPDF }        from './renderer/CLS_RenderPDF.js';
 import { CLS_ImageRenderer }    from './renderer/CLS_ImageRenderer.js';
@@ -30,6 +31,7 @@ export class CLS_View {
         this.clsRenderer            = null;
         // View-owned content element used as the renderer target.
         this.contentContainer       = null;
+        trace_Instance(this, 'CLS_View', 'constructor', 'COMPLETE', { sectionId });
     }
 
     /** Executes authorized commands and confirms only successfully installed or removed windows. */

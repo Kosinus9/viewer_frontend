@@ -3,18 +3,34 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>PDF PoC</title>
-  <script type="module" crossorigin src="/assets/pdf_Poc-Cj5X7I6i.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/CLS_BackendBridge-BtMVofS9.js">
-  <link rel="stylesheet" crossorigin href="/assets/CLS_BackendBridge-DGAc7-TG.css">
+    <title>PoC — trois PDF locaux</title>
+  <script type="module" crossorigin src="/assets/pdf_Poc-DntZI5lg.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/core-7vZXTvHS.js">
+  <link rel="modulepreload" crossorigin href="/assets/CLS_BackendBridge-BA1wBZxI.js">
+  <link rel="stylesheet" crossorigin href="/assets/CLS_BackendBridge-DQ8JHQLA.css">
 </head>
-<body>
-    <form id="pdf-poc-form">
-        <label>Chemin absolu du PDF local <input id="pdf-path" required size="65" placeholder="C:/Users/…/Documents/Viewer-PDF-PoC/document.pdf"></label>
-        <button>Ouvrir</button>
-        <button id="pdf-close" type="button">Envoyer CLOSE</button>
-        <output id="pdf-status"></output>
-    </form>
-    <main id="viewer"></main>
+<body class="pdf-poc">
+    <header class="poc-controls">
+        <p>Simulateur local de layout — backend Python et LayoutManager non connectés.</p>
+        <div class="poc-row">
+            <label for="pdf-poc-1-path">pdf-poc-1</label><input id="pdf-poc-1-path" placeholder="Chemin absolu du premier PDF">
+            <button id="pdf-poc-1-open" type="button">Ouvrir 1</button><button id="pdf-poc-1-close" type="button">CLOSE 1</button>
+            <output id="pdf-poc-1-status" aria-live="polite">Fermé</output>
+        </div>
+        <div class="poc-row">
+            <label for="pdf-poc-2-path">pdf-poc-2</label><input id="pdf-poc-2-path" placeholder="Chemin absolu du deuxième PDF">
+            <button id="pdf-poc-2-open" type="button">Ouvrir 2</button><button id="pdf-poc-2-close" type="button">CLOSE 2</button>
+            <output id="pdf-poc-2-status" aria-live="polite">Fermé</output>
+        </div>
+        <div class="poc-row">
+            <label for="pdf-poc-3-path">pdf-poc-3</label><input id="pdf-poc-3-path" placeholder="Chemin absolu du troisième PDF">
+            <button id="pdf-poc-3-open" type="button">Ouvrir 3</button><button id="pdf-poc-3-close" type="button">CLOSE 3</button>
+            <output id="pdf-poc-3-status" aria-live="polite">Fermé</output>
+        </div>
+        <button id="pdf-open-all" type="button">Ouvrir les trois PDF</button>
+        <label><input id="trace-enabled" type="checkbox">Traces DevTools + CMD (développement)</label>
+        <small>X demande CLOSE ; les boutons CLOSE injectent une commande autorisée de test.</small>
+    </header>
+    <main id="viewer" aria-label="Surface d’affichage PDF"></main>
 </body>
 </html>

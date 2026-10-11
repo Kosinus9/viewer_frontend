@@ -1,4 +1,5 @@
 import { CLS_RenderGeneric }        from './CLS_RenderGeneric.js';
+import { trace_Instance }           from '../../trace-execution.js';
 
 /** Renders local PDF pages sequentially inside a View-owned container. */
 export class CLS_RenderPDF extends CLS_RenderGeneric {
@@ -11,6 +12,7 @@ export class CLS_RenderPDF extends CLS_RenderGeneric {
         this.isReleased             = false;
         this.renderStarted          = false;
         this.releasePromise         = null;
+        trace_Instance(this, 'CLS_RenderPDF', 'constructor', 'COMPLETE');
     }
 
     /** Loads the locally bundled PDF.js library and its matching worker. */
@@ -40,10 +42,13 @@ export class CLS_RenderPDF extends CLS_RenderGeneric {
             const pdf_Library = await this.load_PDF_Library();
             if (this.isReleased) return;
             this.loadingTask = pdf_Library.getDocument({ url: file_URL, isEvalSupported: false });
+            trace_Instance(this, 'CLS_RenderPDF', 'render', 'START', { operation: 'loadDocument', filePath });
             const pdf_Document = await this.loadingTask.promise;
             if (this.isReleased) return;
             this.pdfDocument = pdf_Document;
+            trace_Instance(this, 'CLS_RenderPDF', 'render', 'COMPLETE', { operation: 'loadDocument', numPages: pdf_Document.numPages });
             for (let page_Number = 1; page_Number <= pdf_Document.numPages; page_Number++) {
+                trace_Instance(this, 'CLS_RenderPDF', 'render', 'START', { operation: 'renderPage', pageNumber: page_Number });
                 const pdf_Page = await pdf_Document.getPage(page_Number);
                 if (this.isReleased) return;
                 try {
@@ -68,6 +73,7 @@ export class CLS_RenderPDF extends CLS_RenderGeneric {
                     });
 
                     await this.renderTask.promise;
+                    if (!this.isReleased) trace_Instance(this, 'CLS_RenderPDF', 'render', 'COMPLETE', { operation: 'renderPage', pageNumber: page_Number });
 
                 } finally {
                     this.renderTask = null;
@@ -76,7 +82,11 @@ export class CLS_RenderPDF extends CLS_RenderGeneric {
                 if (this.isReleased) return;
             }
         } catch (render_Error) {
-            if (this.isReleased) return;
+            if (this.isReleased) {
+                trace_Instance(this, 'CLS_RenderPDF', 'render', 'EXIT', { operation: 'cancelled' });
+                return;
+            }
+            trace_Instance(this, 'CLS_RenderPDF', 'render', 'ERROR', { operation: 'PDF loading or rendering', error: render_Error.message });
             this.release_Render_Resources();
             throw render_Error;
         }
@@ -86,12 +96,18 @@ export class CLS_RenderPDF extends CLS_RenderGeneric {
     release_Render_Resources() {
         if (this.isReleased) return this.releasePromise;
         this.isReleased             = true;
+        trace_Instance(this, 'CLS_RenderPDF', 'release_Render_Resources', 'START', {
+            operation: 'cancelAndDestroy', activeRender: Boolean(this.renderTask), activeLoading: Boolean(this.loadingTask)
+        });
         this.renderTask?.cancel();
         const loading_Task          = this.loadingTask;
         this.loadingTask            = null;
         this.pdfDocument            = null;
         this.renderTask             = null;
-        this.releasePromise         = Promise.resolve(loading_Task?.destroy()).catch(release_Error => {
+        this.releasePromise         = Promise.resolve(loading_Task?.destroy()).then(() => {
+            trace_Instance(this, 'CLS_RenderPDF', 'release_Render_Resources', 'COMPLETE', { operation: 'destroyDocument' });
+        }).catch(release_Error => {
+            trace_Instance(this, 'CLS_RenderPDF', 'release_Render_Resources', 'ERROR', { error: release_Error.message });
             console.error('PDF resource cleanup failed.', release_Error);
         });
         super.release_Render_Resources();

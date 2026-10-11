@@ -1,3 +1,5 @@
+import { trace_Instance } from '../../trace-execution.js';
+
 /** Provides the common contract for content renderers. */
 export class CLS_RenderGeneric {
     static convert_File_Src = null;
@@ -14,6 +16,7 @@ export class CLS_RenderGeneric {
         }
 
         this.contentContainer = contentContainer;
+        trace_Instance(this, 'CLS_RenderGeneric', 'constructor', 'COMPLETE');
     }
 
     /** Defines the asynchronous rendering contract implemented by specialized renderers. */
